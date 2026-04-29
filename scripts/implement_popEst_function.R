@@ -39,6 +39,13 @@ set_ebirdst_access_key("************") # REPLACE WITH YOUR 12 DIGIT ALPHANUMERIC
 #JV_abundance_estimates.Rproj was saved and loaded from.
 dir.create("data/spatial/polygons", recursive = TRUE) #only need to run this one. 
 
+#If using DUC waterfowl density models (PHJV only), you will need to download those rasters manually and save them to the
+#appropriate folder. First run:
+dir.create("data/spatial/ducRasters")
+
+#Visit the online PHJV Information Repository and navigate to:
+#DSS v3 Waterfowl Species Models and download the 7 .tif files and save them to "data/spatial/ducRasters"
+
 
 #Save all polygons in "data/spatial/polygons". Polygons can be saved in any format accepted by
 #the sf package in R (e.g. .shp, .gpkg, .gbd)
@@ -66,9 +73,9 @@ polys <- list("poly1" = poly1, "poly2" = poly2)
 
 
 #Create a list of species using common names
-# a) Example using a custom list
+# a) Examples using a custom list
 species <- c("Mallard", "Baird's Sparrow", "Common Yellowthroat")
-species <- c("Mallard", "Gadwall", "Northern Pintail")
+
 # b) Example pulling species from NAWCA Priority Species list (table included in R project)
 priority_spp <- read.csv("LookupData/nawca_acad_species_match.csv")
 priority_spp$NAWCA_species #View list of all priority species
@@ -77,8 +84,9 @@ species <- c("Western Grebe", "Nelson's Sparrow", "Yellow-breasted Chat") #copy 
 #Note that you could provide the entire priority species list to the popEst function, but this would
 #take a VERY long time to run and its is NOT recommended.
 #Its best to include smaller groups of species in separate runs of the function
-
 #######################################################################################################
+
+
 #3. Implement population estimation function for the list of polygons and species
 #Note this can take a while to run, especially if your polygon and/or species list is long
 source("functions/Function_PopEsts.R")
