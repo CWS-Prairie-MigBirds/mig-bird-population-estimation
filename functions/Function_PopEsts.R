@@ -125,28 +125,6 @@ popEsts <- function(species, polys) {
                       sdmSource = dataSource,
                       popEstSource = dataSource)
     return(results)
-    
-    
-    tidyr::pivot_longer(cols = everything(),
-                          names_to = "season",
-                          values_to = "propPolySum") %>%
-      dplyr::mutate(pop_est = round(propPolySum * pe, -1)) %>% #multiply weighted, summed proportions by total population size to get population estimate
-      dplyr::mutate(density_sqkm = round(pop_est/poly_area, 3), #divide by area to get mean density
-                    popEstSource = popEstSource) %>%
-      select(season, popEstSource, pop_est, density_sqkm)
-    
-    
-    
-    # abd <- terra::crop(sdm, poly_v, snap = "near", mask = T)
-    # poly_area <- terra::expanse(abd, unit = "km")$area
-    # abundance_est <- round(terra::global(abd, fun = "sum", na.rm = TRUE) * fact, -1) %>%
-    #   dplyr::rename(pop_est = sum) %>%
-    #   dplyr::mutate(density_sqkm = round(pop_est/poly_area, 1),
-    #                 species = sp,
-    #                 season = "breeding",
-    #                 sdmSource = dataSource,
-    #                 popEstSource = dataSource)
-    # return(abundance_est)
   }
   
   #loop through species and estimate population size for all available data sources
@@ -413,7 +391,7 @@ popEsts <- function(species, polys) {
                                 density_sqkm = NA)
       
       if(sdm$CGAMv1 == "Yes") {
-        #confirm that conservation polygons overlap with BAM AOI
+        #confirm that conservation polygons overlap with BAM model extent
         invisible(capture.output({
           peStrat <- sf::st_read(dsn = "LookupData/modelExtents.gpkg", layer = "cgam")
         }))
@@ -497,7 +475,7 @@ popEsts <- function(species, polys) {
           
           names(pop_est_duc) <- names(polys_tmp)
           
-          #combine CGAM results
+          #combine DUC results
           ducResults <- dplyr::bind_rows(pop_est_duc, .id = "polyID") %>%
             dplyr::select(species, polyID, sdmSource, popEstSource, season, pop_est, density_sqkm) %>%
             dplyr::arrange(polyID)
