@@ -103,7 +103,7 @@ popEsts <- function(species, polys) {
       dplyr::mutate(pop_est = round(propPolySum * pe, -1)) %>% #multiply weighted, summed proportions by total population size to get population estimate
       dplyr::mutate(density_sqkm = round(pop_est/poly_area, 3), #divide by area to get mean density
                     popEstSource = popEstSource) %>%
-      select(season, popEstSource, pop_est, density_sqkm)
+      dplyr::select(season, popEstSource, pop_est, density_sqkm)
     return(results)
   }
   
@@ -118,7 +118,7 @@ popEsts <- function(species, polys) {
       dplyr::summarise(dplyr::across(-c(ID, weight),~ sum(.x * weight, na.rm = T))) %>% #sum pixel values weighted by proportion of pixel that occurs within the polygon
       dplyr::pull(colnames(.)) * fact #multiply by factor to convert density to individuals/pixel, if needed
     
-    results <- tibble(pop_est = round(pop_est, -1),
+    results <- tibble::tibble(pop_est = round(pop_est, -1),
                       density_sqkm = round(pop_est/poly_area, 3),
                       species = sp,
                       season = "breeding",
@@ -286,7 +286,7 @@ popEsts <- function(species, polys) {
           #load ACAD population estimates
           pe <- read.csv("LookupData/acad.csv") %>%
             dplyr::filter(common_name == sp) %>%
-            pull(acad_global)
+            dplyr::pull(acad_global)
           
           #Calculate proportional relative abundance raster for global
           total_global <- terra::global(abd_nonbreed, fun = "sum", na.rm = T)
@@ -492,7 +492,7 @@ popEsts <- function(species, polys) {
         dplyr::arrange(polyID, season, sdmSource)
       
       #clear environment and RAM before running next species
-      keep <- c("results", "sdmSources", "peSources", "polyOverlap", "prop_ebird_strata", "pop_est_ebird", "popEst_DensityModel")
+      keep <- c("polys","results", "sdmSources", "peSources", "polyOverlap", "prop_ebird_strata", "pop_est_ebird", "popEst_DensityModel")
       rm(list = setdiff(ls(), keep),
          envir = environment())
       invisible(capture.output({gc()}))
