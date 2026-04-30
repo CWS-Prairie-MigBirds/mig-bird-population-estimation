@@ -35,7 +35,7 @@ check_packages <- function(pkgs) {
 popEsts <- function(species, polys) {
   
   #check for required packages
-  required_pkgs <- c("sf", "dplyr", "BAMexploreR", "ebirdst", "terra", "osfr", "purrr")
+  required_pkgs <- c("sf", "dplyr", "BAMexploreR", "ebirdst", "terra", "osfr", "purrr", "tibble", "units", "tidyr")
   check_packages(required_pkgs)
   
   #load source tables for distribution models and population estimates
