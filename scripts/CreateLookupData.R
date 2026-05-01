@@ -263,6 +263,7 @@ plot(bcr)
 wfStrata <- st_read("data/spatial/WaterfowlStrata/WBPHS_Stratum_Boundaries.shp") %>%
   group_by(stratum) %>%
   summarize(geometry = st_union(geometry)) %>%
+  filter(stratum %in% usfws_exp$stratum)
   st_transform(crs = bamCRS)
 
 #CGAM model boundary
