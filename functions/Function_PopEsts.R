@@ -152,7 +152,7 @@ popEsts <- function(species, polys) {
         #download eBird relative abundance surface if no already present
         spCode <- ebirdst::get_species(sp)
         if(!any(basename(list.dirs(ebirdFolder, recursive = TRUE)) == spCode)) {
-          cat("\t Downloading eBird relative abundance surface for:", sp, "\n")
+          cat("\t Downloading eBird relative abundance surface \n")
           # Download seasonal max abundance data at 3 km
           suppressMessages(
             try({ebirdst::ebirdst_download_status(sp, pattern = "abundance_seasonal_mean_3km", download_occurrence = FALSE, dry_run = FALSE, force = TRUE)}, silent = TRUE)
@@ -355,7 +355,7 @@ popEsts <- function(species, polys) {
           
           #check if species raster is already downloaded, then download if needed
           if(!file.exists(file.path("data/spatial/bamRasters",paste0("pred-", spCode, "-CAN-Mean.tif")))) {
-            cat("\t Downloading BAM density model for:", sp, "\n")
+            cat("\t Downloading BAM density model...this takes time, please be patient \n")
             suppressMessages({
               abd <- BAMexploreR::bam_get_layer(spCode, ver, "data/spatial/bamRasters")
             })
@@ -414,7 +414,7 @@ popEsts <- function(species, polys) {
           file_path <- file.path(cgamDir, file$name)
           
           if(!file.exists(file_path)) {
-            cat("\t Downloading CGAM density model for:", sp, "\n")
+            cat("\t Downloading CGAM density model \n")
             osfr::osf_download(file, path = cgamDir)
           }
           abd <- terra::rast(file_path)
