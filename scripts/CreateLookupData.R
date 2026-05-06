@@ -143,15 +143,18 @@ pif_reg <- read_excel("data/PopEsts/PopEsts_BCRxProvState_2020_04_24.xlsx") %>%
 #   dplyr::rename(common_name = english_name,
 #                 pif_global = population_estimate_global) #change to shorter names
     
-#Download and manipulate USFWS waterfowl population estimates and 4-letter species codes
-download.file("https://iris.fws.gov/APPS/ServCat/DownloadFile/277349",
-              destfile = "data/PopEsts/usfws_waterfowl_pops_2025.zip",
-              mode = "wb")
-download.file("https://www.birdpop.org/docs/misc/IBPAOU.zip",
-              destfile = "data/birdCodes.zip",
-              mode = "wb")
-unzip("data/PopEsts/usfws_waterfowl_pops_2025.zip", exdir = "data/PopEsts")
-unzip("data/birdCodes.zip", exdir = "data/PopEsts")
+#Download and manipulate USFWS waterfowl population estimates for Traditional survey area and 4-letter species codes
+#ONLY RUN THIS SECTION ONCE
+############################
+# download.file("https://iris.fws.gov/APPS/ServCat/DownloadFile/277349",
+#               destfile = "data/PopEsts/usfws_waterfowl_pops_2025.zip",
+#               mode = "wb")
+# download.file("https://www.birdpop.org/docs/misc/IBPAOU.zip",
+#               destfile = "data/birdCodes.zip",
+#               mode = "wb")
+# unzip("data/PopEsts/usfws_waterfowl_pops_2025.zip", exdir = "data/PopEsts")
+# unzip("data/birdCodes.zip", exdir = "data/PopEsts")
+###########################
 usfws <- read.csv("data/PopEsts/WBPHS_Traditional_Area_Stratum_Estimates/wbphs_traditionalarea_estimates_forDistribution.csv") %>%
  mutate(survey_species = case_match(survey_species,
                                     "CAGO" ~ "CANG",
@@ -175,6 +178,19 @@ usfws_exp <- usfws %>%
   select(common_name, stratum, pop_est)
 
 file.remove(c("data/PopEsts/usfws_waterfowl_pops_2025.zip", "data/birdCodes.zip"))
+
+#Obtain USFWS waterfowl population estimates for Eastern Survey Area and combine with Traditional survey area
+eastern <- read.csv("data/PopEsts/eastern-composite-model-BPOP-2025.csv") |>
+  mutate(survey_species = toupper(MASAlpha)) |>
+  rename(stratum = Region,
+         pop_est = Est) |>
+  filter(Yr == 2025) |>
+  left_join(spCodes) |>
+  select(common_name, stratum, pop_est) |>
+  na.omit()
+
+usfws_exp <- rbind(usfws_exp, eastern)
+
 
 #Create lookup table for sources population estimates
 dir.create("data/PopEsts/modified")
@@ -263,7 +279,7 @@ plot(bcr)
 wfStrata <- st_read("data/spatial/WaterfowlStrata/WBPHS_Stratum_Boundaries.shp") %>%
   group_by(stratum) %>%
   summarize(geometry = st_union(geometry)) %>%
-  filter(stratum %in% usfws_exp$stratum)
+  filter(stratum %in% unique(usfws_exp$stratum))
   st_transform(crs = bamCRS)
 
 #CGAM model boundary
