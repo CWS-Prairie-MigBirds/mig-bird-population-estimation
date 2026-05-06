@@ -60,12 +60,12 @@ popEsts <- function(species, polys) {
     suppressWarnings(ints <- sf::st_intersection(peStrat, poly_prj))
     min_area <- units::set_units(3000000, "m^2") #using 3e6 m^2 as minimum area
     ints <- ints[sf::st_area(ints) > min_area, ] 
-    strata <- peStrat %>%
+    strata <- peStrat |>
       dplyr::filter(stratum %in% ints$stratum)
     
     #2. extract population estimates for intersecting strata
-    pepoly <- pe %>%
-      dplyr::filter(stratum %in% strata$stratum) %>%
+    pepoly <- pe |>
+      dplyr::filter(stratum %in% strata$stratum) |>
       dplyr::pull(pop_est)
     if(length(pepoly) > 0) {
       pepoly <- sum(pepoly)
@@ -74,7 +74,7 @@ popEsts <- function(species, polys) {
     }
     
     #3. Create proportional relative abudnace raster for each polygon, matched to the appropriate strata
-    strata_v <- terra::vect(strata) %>%
+    strata_v <- terra::vect(strata) |>
       terra::project(terra::crs(sdm))
     abd_strata <- terra::crop(sdm, strata_v, mask = T)
     
@@ -90,19 +90,19 @@ popEsts <- function(species, polys) {
     pe <- pe_sdm[["pe"]]
     prop_strata <- pe_sdm[["prop_raster"]]
     
-    poly_v <- terra::vect(pol) %>%
+    poly_v <- terra::vect(pol) |>
       terra::project(terra::crs(prop_strata))
     
     poly_area <- terra::expanse(poly_v, unit = "km") #calculate area of polygon
-    results <- terra::extract(prop_strata, poly_v, weights = T) %>% #extract values of pixels that intersect with polygon
+    results <- terra::extract(prop_strata, poly_v, weights = T) |> #extract values of pixels that intersect with polygon
       dplyr::summarise(dplyr::across(-c(ID, weight),
-                                     ~ sum(.x * weight, na.rm = T))) %>% #sum pixel values weighted by proportion of pixel that occurs within the polygon
+                                     ~ sum(.x * weight, na.rm = T))) |> #sum pixel values weighted by proportion of pixel that occurs within the polygon
       tidyr::pivot_longer(cols = everything(),
                           names_to = "season",
-                          values_to = "propPolySum") %>%
-      dplyr::mutate(pop_est = round(propPolySum * pe, -1)) %>% #multiply weighted, summed proportions by total population size to get population estimate
+                          values_to = "propPolySum") |>
+      dplyr::mutate(pop_est = round(propPolySum * pe, -1)) |> #multiply weighted, summed proportions by total population size to get population estimate
       dplyr::mutate(density_sqkm = round(pop_est/poly_area, 3), #divide by area to get mean density
-                    popEstSource = popEstSource) %>%
+                    popEstSource = popEstSource) |>
       dplyr::select(season, popEstSource, pop_est, density_sqkm)
     return(results)
   }
@@ -110,13 +110,13 @@ popEsts <- function(species, polys) {
   #Function to estimate population size from density model
   #pol = conservation polygon, sdm = species raster, fact = factor to transform units into individuals/pixel
   popEst_DensityModel <- function(pol, sdm, fact = 1, dataSource) {
-    poly_v <- terra::vect(pol) %>%
+    poly_v <- terra::vect(pol) |>
       terra::project(terra::crs(sdm))
     
     poly_area <- terra::expanse(poly_v, unit = "km") #calculate area of polygon
-    pop_est <- terra::extract(sdm, poly_v, weights = T) %>% #extract values of pixels that intersect with polygon
-      dplyr::summarise(dplyr::across(-c(ID, weight),~ sum(.x * weight, na.rm = T))) %>% #sum pixel values weighted by proportion of pixel that occurs within the polygon
-      dplyr::pull(colnames(.)) * fact #multiply by factor to convert density to individuals/pixel, if needed
+    pop_est <- terra::extract(sdm, poly_v, weights = T) |> #extract values of pixels that intersect with polygon
+      dplyr::summarise(dplyr::across(-c(ID, weight),~ sum(.x * weight, na.rm = T))) |> #sum pixel values weighted by proportion of pixel that occurs within the polygon
+      as.numeric() * fact #multiply by factor to convert density to individuals/pixel, if needed
     
     results <- tibble::tibble(pop_est = round(pop_est, -1),
                       density_sqkm = round(pop_est/poly_area, 3),
@@ -131,8 +131,7 @@ popEsts <- function(species, polys) {
   results <- list()
   for (sp in species) {
     #check if any data sources for species
-    sdm <- sdmSources %>%
-      dplyr::filter(common_name == sp)
+    sdm <- dplyr::filter(sdmSources, common_name == sp)
     
     if(nrow(sdm) == 0) {cat("No data available for", sp, "\n")} else {
       #identify sdms available
@@ -168,8 +167,7 @@ popEsts <- function(species, polys) {
           resolution = "3km")
         
         #Determine which large-scale population estimate to use. Prioritize regional estimates if possible (PIF or USFWS). Use ACAD global (non breeding) or US-Can (breeding) if regional are unavailable
-        peSp <- peSources %>%
-          dplyr::filter(common_name == sp)
+        peSp <- dplyr::filter(peSources, common_name == sp)
         
         
         #Breeding Season Start
@@ -182,7 +180,7 @@ popEsts <- function(species, polys) {
         if(peSp$pif_reg == "Yes" | peSp$fws_reg == "Yes") {
           if(peSp$pif_reg == "Yes") {
             #load regional PIF estimates
-            pe <- read.csv("LookupData/pif.csv") %>%
+            pe <- read.csv("LookupData/pif.csv") |>
               dplyr::filter(common_name == sp)
             
             #load strata for regional PIF estimates
@@ -196,7 +194,7 @@ popEsts <- function(species, polys) {
           
           if(peSp$fws_reg == "Yes") {
             #load regional USFWS estimates
-            pe <- read.csv("LookupData/usfws.csv") %>%
+            pe <- read.csv("LookupData/usfws.csv") |>
               dplyr::filter(common_name == sp)
             
             #load strata for regional USFWS estimates
@@ -236,20 +234,20 @@ popEsts <- function(species, polys) {
           polys_tmp <- if(use_canus) {polys_canus} else {polys}
           
           #load ACAD population estimates
-          pe <- read.csv("LookupData/acad.csv") %>%
-            dplyr::filter(common_name == sp) %>%
+          pe <- read.csv("LookupData/acad.csv") |>
+            dplyr::filter(common_name == sp) |>
             dplyr::pull(acad_uscan)
           
           #load polygon for Canada/USA. Using pif_reg and manipulating to have only 1 stratum (Can/US)
           invisible(capture.output({
-            canus <- sf::st_read(dsn = "LookupData/modelExtents.gpkg", layer = "pif_reg") %>%
-              dplyr::mutate(stratum = "canus") %>%
-              dplyr::group_by(stratum) %>%
+            canus <- sf::st_read(dsn = "LookupData/modelExtents.gpkg", layer = "pif_reg") |>
+              dplyr::mutate(stratum = "canus") |>
+              dplyr::group_by(stratum) |>
               dplyr::summarize(geom = sf::st_union(geom))
           }))
           
           #match projections, crop and mask eBird surface with Canada/USA polygon
-          canus_v <- terra::vect(canus) %>% #change to SpatVect
+          canus_v <- terra::vect(canus) |> #change to SpatVect
             terra::project(terra::crs(abd_breeding)) #project Canada/USA to match eBird before cropping
           abd_canus <- terra::crop(abd_breeding, canus_v, mask = T) #crop and mask eBird to Canada/USA
           
@@ -284,8 +282,8 @@ popEsts <- function(species, polys) {
         
         if(peSp$acad == "Yes") {
           #load ACAD population estimates
-          pe <- read.csv("LookupData/acad.csv") %>%
-            dplyr::filter(common_name == sp) %>%
+          pe <- read.csv("LookupData/acad.csv") |>
+            dplyr::filter(common_name == sp) |>
             dplyr::pull(acad_global)
           
           #Calculate proportional relative abundance raster for global
@@ -303,10 +301,10 @@ popEsts <- function(species, polys) {
         #combine results from eBird for breeding and non-breeding season
         ebirdResults <- dplyr::bind_rows(
           c(pop_est_breeding, pop_est_nonbreed),
-          .id = "polyID") %>%
+          .id = "polyID") |>
           dplyr::mutate(sdmSource = "eBird",
-                 species = sp) %>%
-          dplyr::select(species, polyID, sdmSource, popEstSource, season, pop_est, density_sqkm) %>%
+                 species = sp) |>
+          dplyr::select(species, polyID, sdmSource, popEstSource, season, pop_est, density_sqkm) |>
           dplyr::arrange(polyID)
         rownames(ebirdResults) <- NULL
         
@@ -349,8 +347,8 @@ popEsts <- function(species, polys) {
           #download BAM raster for given species
           dir.create("data/spatial/bamRasters", showWarnings = FALSE)
           #extract 4-letter code from species table and download BAM raster layer
-          spCode <- BAMexploreR::spp_tbl %>%
-            dplyr::filter(commonName == sp) %>%
+          spCode <- BAMexploreR::spp_tbl |>
+            dplyr::filter(commonName == sp) |>
             dplyr::pull(speciesCode)
           
           #check if species raster is already downloaded, then download if needed
@@ -372,8 +370,8 @@ popEsts <- function(species, polys) {
           names(pop_est_bam) <- names(polys_tmp)
           
           #combine BAM results
-          bamResults <- dplyr::bind_rows(pop_est_bam, .id = "polyID") %>%
-            dplyr::select(species, polyID,sdmSource, popEstSource, season, pop_est, density_sqkm) %>%
+          bamResults <- dplyr::bind_rows(pop_est_bam, .id = "polyID") |>
+            dplyr::select(species, polyID,sdmSource, popEstSource, season, pop_est, density_sqkm) |>
             dplyr::arrange(polyID)
         }
       }#END OF BAM WORKFLOW 
@@ -405,11 +403,11 @@ popEsts <- function(species, polys) {
           #download CGAM raster for given species
           cgamDir <- "data/spatial/cgamRasters"
           dir.create(cgamDir, showWarnings = FALSE)
-          spCode <- read.csv("LookupData/IBPSpeciesCodes.csv") %>%
-            dplyr::filter(COMMONNAME == sp) %>%
+          spCode <- read.csv("LookupData/IBPSpeciesCodes.csv") |>
+            dplyr::filter(COMMONNAME == sp) |>
             dplyr::pull(SPEC)
           
-          file <- osfr::osf_retrieve_node("csugd") %>%
+          file <- osfr::osf_retrieve_node("csugd") |>
             osfr::osf_ls_files(pattern = spCode)
           file_path <- file.path(cgamDir, file$name)
           
@@ -428,8 +426,8 @@ popEsts <- function(species, polys) {
           names(pop_est_cgam) <- names(polys_tmp)
           
           #combine CGAM results
-          cgamResults <- dplyr::bind_rows(pop_est_cgam, .id = "polyID") %>%
-            dplyr::select(species, polyID,sdmSource, popEstSource, season, pop_est, density_sqkm) %>%
+          cgamResults <- dplyr::bind_rows(pop_est_cgam, .id = "polyID") |>
+            dplyr::select(species, polyID,sdmSource, popEstSource, season, pop_est, density_sqkm) |>
             dplyr::arrange(polyID)
         }
         
@@ -459,8 +457,8 @@ popEsts <- function(species, polys) {
           cat("\t DUC density model \n")
           
           #load DUC raster for given species
-          spCode <- read.csv("LookupData/IBPSpeciesCodes.csv") %>%
-            dplyr::filter(COMMONNAME == sp) %>%
+          spCode <- read.csv("LookupData/IBPSpeciesCodes.csv") |>
+            dplyr::filter(COMMONNAME == sp) |>
             dplyr::pull(SPEC)
           
           ducDir <- "data/spatial/ducRasters"
@@ -476,8 +474,8 @@ popEsts <- function(species, polys) {
           names(pop_est_duc) <- names(polys_tmp)
           
           #combine DUC results
-          ducResults <- dplyr::bind_rows(pop_est_duc, .id = "polyID") %>%
-            dplyr::select(species, polyID, sdmSource, popEstSource, season, pop_est, density_sqkm) %>%
+          ducResults <- dplyr::bind_rows(pop_est_duc, .id = "polyID") |>
+            dplyr::select(species, polyID, sdmSource, popEstSource, season, pop_est, density_sqkm) |>
             dplyr::arrange(polyID)
         }
         
@@ -487,8 +485,8 @@ popEsts <- function(species, polys) {
       results[[sp]] <- rbind(ebirdResults,
                              bamResults,
                              cgamResults,
-                             ducResults) %>%
-        dplyr::filter(rowSums(!is.na(.)) > 0) %>% #remove rows with all NAs
+                             ducResults) |>
+        dplyr::filter(dplyr::if_any(dplyr::everything(), ~ !is.na(.))) |> #remove rows with all NAs
         dplyr::arrange(polyID, season, sdmSource)
       
       #clear environment and RAM before running next species
