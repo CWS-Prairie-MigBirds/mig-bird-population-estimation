@@ -158,11 +158,6 @@ pif_reg <- read_excel("data/PopEsts/PopEsts_BCRxProvState_2020_04_24.xlsx") %>%
 usfws <- read.csv("data/PopEsts/WBPHS_Traditional_Area_Stratum_Estimates/wbphs_traditionalarea_estimates_forDistribution.csv") %>%
  mutate(survey_species = case_match(survey_species,
                                     "CAGO" ~ "CANG",
-                                    "SCAU" ~ "LESC",
-                                    "SWAN" ~ "TRUS",
-                                    "MERG" ~ "COME",
-                                    "GOLD" ~ "COGO",
-                                    "SCOT" ~ "COSC",
                                     .default = survey_species)) %>%
   filter(survey_species != "POND" & survey_year == 2025) %>%
   rename(pop_est = estimate)
@@ -171,7 +166,9 @@ usfws <- read.csv("data/PopEsts/WBPHS_Traditional_Area_Stratum_Estimates/wbphs_t
 spCodes <- read.csv("data/PopEsts/IBP-AOS-list25.csv") %>%
   select(SPEC, COMMONNAME) %>%
   rename(survey_species = SPEC,
-         common_name = COMMONNAME)
+         common_name = COMMONNAME) %>%
+  rbind(data.frame("survey_species" = c("SCAU", "SWAN", "MERG", "GOLD", "SCOT"),
+                   "common_name" = c("Scaup spp", "Swan spp", "Merganser spp", "Goldeneye spp", "Scoter spp")))
 
 usfws_exp <- usfws %>%
   left_join(spCodes) %>%
