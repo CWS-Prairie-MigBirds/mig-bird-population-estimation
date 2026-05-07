@@ -10,10 +10,15 @@ source("functions/Function_PopEsts.R")
 priority_spp <- read.csv("LookupData/nawca_acad_species_match.csv")
 priority_spp$NAWCA_species
 can <- ne_states(country = "Canada", returnclass = "sf") %>%
-  select(name) %>%
-  vect() %>%
-  project("EPSG:8857")
+  select(name) 
+us <- ne_states(country = "United States of America", returnclass = "sf") %>%
+  filter(name != "Hawaii") %>%         # remove Hawaii
+  select(name)
 
+canus <- rbind(can, us) %>%
+  vect() %>%
+  project("EPSG:8857") %>%
+  crop(ext(c(-14027977.8003184, -3000000, 3104391.03526834, 8303080.49567922)))
 
 #PBHJV
 #####################################################################
@@ -66,11 +71,17 @@ names(ehjvpoly2) <- ehjvpoly2[[1]]$NAME_E
 ehjv_est <- popEsts(ehjvsp, ehjvpoly2)
 
 #reproject eBird rasters for making maps in ArcPro
-OSFL <- terra::rast("data/spatial/eBirdRasters/2023/olsfly/seasonal/olsfly_abundance_seasonal_mean_3km_2023.tif") %>%
-  crop(can, mask = T) %>%
+NOPI <- terra::rast("data/spatial/eBirdRasters/2023/norpin/seasonal/norpin_abundance_seasonal_mean_3km_2023.tif") %>%
+  crop(canus, mask = T) %>%
   terra::project("EPSG:3347")  # Canada Albers)
 plot(OSFL)
-writeRaster(OSFL, "data/spatial/eBirdRasters/reprojected/OSFL_ebird.tif")
+writeRaster(NOPI, "data/spatial/eBirdRasters/reprojected/NOPI_ebird.tif")
+
+MALL <- terra::rast("data/spatial/eBirdRasters/2023/mallar3/seasonal/mallar3_abundance_seasonal_mean_3km_2023.tif") %>%
+  crop(canus, mask = T) %>%
+  terra::project("EPSG:3347")  # Canada Albers)
+plot(MALL)
+writeRaster(MALL, "data/spatial/eBirdRasters/reprojected/MALL_ebird.tif")
 ########################################################################
 
 #PHJV
@@ -83,21 +94,14 @@ phjv_est <- popEsts(phjvsp, phjvpoly)
 write.csv(phjv_est, "Output/phjv_ex.csv", row.names = F)
 
 
-
-
-ggplot(wfStrata) +
-  geom_sf(fill = "lightblue", color = "black") +
-  geom_sf_text(aes(label = stratum), size = 3) +
-  theme_minimal()
-
-
-
-
-
-
-
-
-
+#Export shapefiles for ArcPro
+st_layers("LookupData/modelExtents.gpkg")
+pif <- st_read("LookupData/modelExtents.gpkg", "pif_reg")
+st_write(pif, "temp/pif.shp")
+usfws <- st_read("LookupData/modelExtents.gpkg", "usfws") %>%
+  st_write("temp/usfws.shp")
+pifdata <- read.csv("LookupData/usfws.csv")
+unique(pifdata$common_name)
 
 
 
