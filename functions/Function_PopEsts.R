@@ -2,7 +2,7 @@
 #Function title: Estimate bird species popultion size for given area(s)
 #Input list of species and list of polygons (shapefiles) for which population estimates are needed. Function will output population 
 #estiamtes using all available data sources for each species and polygon.
-#Written by: Barry Robinson, barry.robinson@ec.gc.ca
+#Written by: Barry Robinson (barry.robinson@ec.gc.ca) and Jenny Munoz (jmunoz@birdscanada.org)
 #Date: March 25, 2026
 ############################################################################
 
