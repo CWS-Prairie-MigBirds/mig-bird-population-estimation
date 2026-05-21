@@ -468,7 +468,7 @@ popEsts <- function(species, polys) {
           #estimate population size
           pop_est_duc <- purrr::map(polys_tmp, popEst_DensityModel,
                                      sdm = abd,
-                                     fact = 0.16, #DUC models have 0.4 x 0.4 km pixels = 0.16km^2
+                                     fact = 0.32, #DUC models have 0.4 x 0.4 km pixels = 0.16km^2. MULTILYING BY 2 to convert from pairs to total individual
                                      dataSource = "DUC")
           
           names(pop_est_duc) <- names(polys_tmp)
