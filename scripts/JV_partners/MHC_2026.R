@@ -28,8 +28,8 @@ polys <- lapply(polys, function(x) {
 sf::sf_use_s2(TRUE)
 
 #load example tracts of land
-polyList <- list.files("data/spatial/polygons/MHC_tracts", pattern = "\\.shp$", full.names = T)
-polyNames <- list.files("data/spatial/polygons/MHC_tracts", pattern = "\\.shp$") %>%
+polyList <- list.files("data/spatial/polygons/MHC_tracts/Projects5.64Buffer", pattern = "\\.shp$", full.names = T)
+polyNames <- list.files("data/spatial/polygons/MHC_tracts/Projects5.64Buffer", pattern = "\\.shp$") %>%
   sub("\\.shp$", "", .)
 polys <- lapply(polyList, function(x) {
   tmp <- st_read(x) |>
@@ -38,10 +38,13 @@ polys <- lapply(polyList, function(x) {
 })
 names(polys) <- polyNames
 
+#plot to check the polygons
+lapply(polys, plot)
 #most of these are very small, so need to relax min size restriction
 lapply(polys, st_area) |>
   unlist() |>
   min()
+
 
 species1 <- c("Northern Pintail","Lesser Scaup","Mallard","Snow Goose","Tundra Swan")
 pop_ests1 <- popEsts(species1, polys)
@@ -75,6 +78,8 @@ results <- rbind(pop_ests1, pop_ests2, pop_ests3, pop_ests4, pop_ests5, pop_ests
 write.csv(results, "Output/MHC_TargetLandscapes.csv", row.names = F)
 write.csv(results_buffer, "Output/MHC_KillarneyBuffer.csv", row.names = F)
 write.csv(results, "Output/ExampleTracts.csv", row.names = F)
+
+write.csv(results, "Output/MHC_BufferedPolygons2.csv", row.names = F)
 
 
 
