@@ -6,6 +6,7 @@ eBirdAccessKey_Barry.R
 data
 scripts/jenny_functions
 scripts/JV_partners
+scripts/QueryPrioritySpecies_eBirdOnly.R
 ReadMe.docx
 Output
 temp
